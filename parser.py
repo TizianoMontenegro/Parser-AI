@@ -15,7 +15,11 @@ V -> "smiled" | "tell" | "were"
 """
 
 NONTERMINALS = """
-S -> N V
+S -> NP VP | NP PP | S Conj S | NP | VP
+NP -> N | Det N | Det Adj N | NP PP
+VP -> V | V NP | V NP PP | V PP | VP Adv | Adv VP
+PP -> P NP
+Adj -> Adj Adj
 """
 
 grammar = nltk.CFG.fromstring(NONTERMINALS + TERMINALS)
@@ -62,7 +66,17 @@ def preprocess(sentence):
     and removing any word that does not contain at least one alphabetic
     character.
     """
-    raise NotImplementedError
+    # print("initial",sentence)
+    # 
+    words = nltk.word_tokenize(sentence.lower())
+    
+    # print("tokenized",words)
+    for word in words:
+        if word.isalpha():
+            continue
+        words.remove(word)
+    # print("result",words)
+    return words
 
 
 def np_chunk(tree):
@@ -72,8 +86,15 @@ def np_chunk(tree):
     whose label is "NP" that does not itself contain any other
     noun phrases as subtrees.
     """
-    raise NotImplementedError
+    np_chunks = []
 
+    for subtree in tree.subtrees():
+        if subtree.label() == "NP":
+            # Only add this NP if it does NOT contain any other NP as a descendant (excluding itself)
+            if not any(child.label() == "NP" for child in subtree.subtrees(lambda t: t != subtree)):
+                np_chunks.append(subtree)
+
+    return np_chunks
 
 if __name__ == "__main__":
     main()
